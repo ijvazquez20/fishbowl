@@ -1,0 +1,11 @@
+.profile-item { width: 100%; min-height: 52px; padding: 8px 14px; border-radius: 12px; border: 2px solid transparent; background: var(--field); color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+.profile-item[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-bg); }
+.add-dashed { border: 1.5px dashed var(--accent); background: transparent; color: var(--accent-light); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; }
+.add-dashed:hover { background: var(--accent-bg); }
+.add-form { margin: 0; padding: 14px 16px; background: var(--field); border-bottom: 1px solid var(--line); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.add-form-m { margin: 0; padding: 14px; border-radius: 18px; background: var(--field); border: 1px solid var(--line-3); display: flex; flex-direction: column; gap: 10px; }
+.act-row { min-height: 52px; padding: 4px 16px; display: grid; grid-template-columns: 56px minmax(0, 1fr) 130px 128px 236px 40px; gap: 12px; align-items: center; border-bottom: 1px solid var(--rule); }
+.act-head { min-height: 40px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-bottom-color: var(--line); }
+.odds-bar { height: 8px; border-radius: 4px; background: var(--rule); overflow: hidden; }
+.odds-bar > div { height: 100%; border-radius: 4px; background: var(--accent); }
+@media (max-width: 1280px) { .act-row { grid-template-columns: 56px minmax(0, 1fr) 118px 116px 210px 40px; gap: 10px; } }

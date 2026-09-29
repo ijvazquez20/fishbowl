@@ -1,0 +1,6 @@
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 20px; }
+.log-row { padding: 11px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start; }
+.round-badge { height: 28px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--soft); display: flex; align-items: center; justify-content: center; }
+.ffa-row { padding: 11px 0; border-bottom: 1px solid var(--rule); display: grid; gap: 16px; align-items: start; }
+.over-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-light); }
+@media (max-width: 1200px) { .detail-grid { grid-template-columns: minmax(0, 1fr) 380px; } }

@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "fishbowl": {
+      "users": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid && auth.token.email == 'ij.vazquez20@gmail.com'",
+          ".write": "auth != null && auth.uid === $uid && auth.token.email == 'ij.vazquez20@gmail.com'"
+        }
+      }
+    }
+  }
+}
