@@ -11,13 +11,21 @@ export interface Action {
   /** Short description for the Profiles screen. */
   you: string;
   cat: Cat;
-  /** Mana cost. Ignored for 'cmdcast', which costs its commander's power plus tax. */
+  /**
+   * Mana cost. Ignored for 'cmdcast', which costs its commander's power plus tax. For `perLand`
+   * actions it is the fewest lands needed; they spend every land.
+   */
   cost: number;
   /** Default frequency (3 Common, 2 Normal, 1 Rare) for profiles that have no weight of their own. */
   w: Freq;
   p?: number;
   t?: number;
+  /** Makes this many 1/1 tokens. */
   tokens?: number;
+  /** Makes one 1/1 token per land it has. */
+  perLand?: boolean;
+  /** Only picked when its board has tokens, or any creatures. */
+  needs?: 'tokens' | 'creatures';
   dmg?: number;
   gain?: number;
   /** Targeted: in Free for All with spread targeting it can hit another goldfish instead of you. */
@@ -75,6 +83,10 @@ export const DEFAULT_ACTIONS: Action[] = [
   { id: 'c33', name: 'Casts a 3/3 creature', you: 'Joins its board, attacks next turn.', cat: 'creature', cost: 3, w: 2, p: 3, t: 3 },
   { id: 'c55', name: 'Casts a 5/5 creature', you: 'Joins its board, attacks next turn.', cat: 'creature', cost: 5, w: 1, p: 5, t: 5 },
   { id: 'tokens', name: 'Makes two 1/1 tokens', you: 'Two tokens join its board.', cat: 'creature', cost: 2, w: 2, tokens: 2 },
+  { id: 'tokens3', name: 'Makes three 1/1 tokens', you: 'Three tokens join its board.', cat: 'creature', cost: 3, w: 2, tokens: 3 },
+  { id: 'tokensx', name: 'Makes a 1/1 token for each land', you: 'Taps out for one 1/1 per land it has.', cat: 'creature', cost: 4, w: 1, perLand: true },
+  { id: 'double', name: 'Doubles its tokens', you: 'Only with tokens out. Each token gets a 1/1 copy.', cat: 'creature', cost: 6, w: 1, needs: 'tokens' },
+  { id: 'counters', name: 'Puts a +1/+1 counter on each of its creatures', you: 'Only with creatures out. Its whole team grows.', cat: 'creature', cost: 3, w: 1, needs: 'creatures' },
   { id: 'reanimate', name: 'Reanimates a 6/6 creature', you: 'A 6/6 comes back from its graveyard.', cat: 'creature', cost: 3, w: 1, p: 6, t: 6 },
   { id: 'cmdcast', name: 'Casts its commander', you: 'Its commander hits the battlefield as an X/X.', cat: 'commander', cost: 0, w: 3 },
   { id: 'equip', name: 'Suits up its commander (+2/+2)', you: 'Only when its commander is out.', cat: 'commander', cost: 2, w: 2 },
@@ -91,6 +103,8 @@ export const DEFAULT_ACTIONS: Action[] = [
   { id: 'wipe', name: 'Casts a boardwipe', you: 'Destroy all creatures, its own too.', cat: 'wipe', cost: 4, w: 1 },
   { id: 'shock', name: 'Shocks you for 2', you: 'You take 2. It’s a spell, so no blocks.', cat: 'damage', cost: 1, w: 2, tgt: true, dmg: 2 },
   { id: 'drain', name: 'Drains you for 3', you: 'You lose 3 life, it gains 3.', cat: 'damage', cost: 3, w: 2, tgt: true, dmg: 3, gain: 3 },
+  { id: 'overrun', name: 'Overruns: its creatures get +3/+3 this turn', you: 'Only with creatures out. Its attack hits much harder.', cat: 'damage', cost: 5, w: 1, needs: 'creatures' },
+  { id: 'sacdrain', name: 'Sacrifices its tokens to drain you', you: 'Only with tokens out. You lose 1 life for each token.', cat: 'damage', cost: 2, w: 1, tgt: true, needs: 'tokens' },
   { id: 'gain', name: 'Gains 5 life', you: 'It just got harder to kill.', cat: 'lifegain', cost: 3, w: 1, gain: 5 },
 ].map((a) => ({ ...a, builtIn: true }) as Action);
 
@@ -102,6 +116,11 @@ const GAME_YOU_ONE: Record<string, string> = {
   c33: 'Nothing yet. It can attack next turn.',
   c55: 'Nothing yet. It can attack next turn.',
   tokens: 'Nothing yet. Both can attack next turn.',
+  tokens3: 'Nothing yet. All three can attack next turn.',
+  tokensx: 'Nothing yet. They can all attack next turn.',
+  double: 'Nothing yet. The copies can attack next turn.',
+  counters: 'Nothing yet. Its whole team just got bigger.',
+  overrun: 'Block what you can: every attacker has +3/+3 this turn.',
   reanimate: 'Nothing yet. It comes back from its graveyard and can attack next turn.',
   cmdcast: 'Nothing yet. Its commander can attack next turn.',
   equip: 'Nothing. Its commander just got bigger.',
@@ -149,6 +168,7 @@ export const BUILTIN_PROFILES: BuiltInProfile[] = [
   { id: 'reanimation', name: 'Reanimation', desc: 'Cheats big creatures back from its graveyard.', w: { idle: 2, c22: 2, c33: 1, cmdcast: 2, ramp: 2, reanimate: 3, gyhate: 2, kill: 1, wipe: 1 } },
   { id: 'spellslinger', name: 'Spellslinger', desc: 'Cheap spells: burn, bounce and tokens.', w: { idle: 1, c11: 1, tokens: 3, cmdcast: 2, ramp: 2, shock: 3, drain: 2, bounce: 2, counter: 2, kill: 1 } },
   { id: 'control', name: 'Control', desc: 'Counters, removal and wipes. Few threats.', w: { idle: 2, c22: 1, cmdcast: 2, ramp: 2, counter: 3, bounce: 2, tax: 1, kill: 3, cmdr: 2, art: 1, wipe: 2, gain: 1 } },
+  { id: 'tokens', name: 'Tokens', desc: 'Floods the board with 1/1s, then pumps or sacrifices them.', w: { idle: 1, cmdcast: 2, ramp: 2, tokens: 3, tokens3: 3, tokensx: 2, double: 1, counters: 2, overrun: 1, sacdrain: 2, kill: 1 } },
 ];
 
 /** A built-in profile as it ships: its actions on, and a frequency for every default action. */

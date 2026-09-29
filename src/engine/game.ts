@@ -27,7 +27,7 @@ export interface Setup {
 }
 export interface Opponent { name: string; profileId: string; profileName: string; cmdrPower: number }
 
-export interface Creature { id: number; p: number; t: number; cmd?: boolean }
+export interface Creature { id: number; p: number; t: number; cmd?: boolean; token?: boolean }
 export interface Out { round: number; by: Actor; how: 'damage' | 'commander' }
 export interface Fish {
   name: string;
@@ -158,7 +158,23 @@ export function cmdPower(f: Fish): number {
   f.creatures.forEach((c) => { if (c.cmd) p = c.p; });
   return p;
 }
-export function ptLabel(c: Creature): string { return (c.cmd ? 'Commander ' : '') + c.p + '/' + c.t; }
+export interface CreatureGroup { key: string; p: number; t: number; cmd: boolean; token: boolean; ids: number[] }
+/** Tokens with the same power and toughness stack together; every other creature stands alone. */
+export function groupCreatures(list: Creature[]): CreatureGroup[] {
+  const out: CreatureGroup[] = [];
+  list.forEach((c) => {
+    const same = c.token ? out.find((g) => g.token && g.p === c.p && g.t === c.t) : undefined;
+    if (same) same.ids.push(c.id);
+    else out.push({ key: String(c.id), p: c.p, t: c.t, cmd: !!c.cmd, token: !!c.token, ids: [c.id] });
+  });
+  return out;
+}
+function groupLabel(g: CreatureGroup): string {
+  const pt = g.p + '/' + g.t;
+  if (g.cmd) return 'Commander ' + pt;
+  if (g.token) return pt + ' token' + (g.ids.length > 1 ? ' ×' + g.ids.length : '');
+  return pt;
+}
 
 function newRound(n: number, count: number): RoundRec {
   return { n, dealt: new Array(count).fill(0), cmd: new Array(count).fill(0), seats: new Array(count).fill(null), life: null };
@@ -222,7 +238,12 @@ function costOf(a: Action, f: Fish): number { return a.id === 'cmdcast' ? f.cmd.
 function usable(a: Action, f: Fish): boolean {
   if (a.id === 'cmdcast') return !f.cmd.onBoard;
   if (a.id === 'equip') return f.cmd.onBoard;
+  if (a.needs === 'tokens') return f.creatures.some((c) => c.token);
+  if (a.needs === 'creatures') return f.creatures.length > 0;
   return true;
+}
+function tokens(f: Fish, s: GameState, n: number) {
+  for (let k = 0; k < n; k++) { f.creatures.push({ id: s.nextId, p: 1, t: 1, token: true }); s.nextId += 1; }
 }
 function poolFor(f: Fish, profile: Profile | null, exclude: string[], actions: Action[]): Action[] {
   if (!profile) return [];
@@ -250,8 +271,9 @@ function eliminate(g: Fish, round: number, by: Actor, how: Out['how']) {
   g.cmd.onBoard = false;
   g.counter = false;
 }
-function vsName(id: string, t: string, x: string | null): string {
+function vsName(id: string, t: string, x: string | null, n = 0): string {
   switch (id) {
+    case 'sacdrain': return 'Sacrifices ' + n + (n === 1 ? ' token: ' : ' tokens: ') + t + ' loses ' + n;
     case 'kill': return x ? 'Destroys ' + poss(t) + ' ' + x : 'Goes after ' + poss(t) + ' creatures, but finds none';
     case 'bounce': return x ? 'Bounces ' + poss(t) + ' ' + x : 'Tries to bounce something of ' + poss(t) + '. Nothing there';
     case 'cmdr': return x ? 'Removes ' + poss(t) + ' commander' : 'Aims at ' + poss(t) + ' commander, but it isn’t out';
@@ -268,7 +290,7 @@ function vsName(id: string, t: string, x: string | null): string {
 function attackerLabel(list: Creature[]): string {
   if (list.length !== 1) return 'creatures';
   const c = list[0];
-  return c.cmd ? c.p + '/' + c.t + ' commander' : c.p + '/' + c.t;
+  return c.p + '/' + c.t + (c.cmd ? ' commander' : c.token ? ' token' : '');
 }
 
 function finishRound(s: GameState) {
@@ -354,7 +376,7 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
       }
     }
     canReroll = poolFor(f, profile, exclude.concat([act.id]), ctx.actions).length > 0;
-    cost = costOf(act, f);
+    cost = act.perLand ? f.lands : costOf(act, f);
     name = act.name;
     you = gameYouText(act, table);
 
@@ -364,8 +386,17 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
       name = 'Casts its commander (' + f.cmd.power + '/' + f.cmd.power + ')';
     } else if (act.id === 'equip') {
       f.creatures.forEach((c) => { if (c.cmd) { c.p += 2; c.t += 2; } });
+    } else if (act.perLand) {
+      tokens(f, s, f.lands);
+      name = 'Makes ' + f.lands + ' 1/1 tokens, one per land';
     } else if (act.tokens) {
-      for (let k = 0; k < act.tokens; k++) { f.creatures.push({ id: s.nextId, p: 1, t: 1 }); s.nextId += 1; }
+      tokens(f, s, act.tokens);
+    } else if (act.id === 'double') {
+      const n = f.creatures.filter((c) => c.token).length;
+      tokens(f, s, n);
+      name = 'Doubles its tokens: ' + n + ' more 1/1' + (n === 1 ? '' : 's');
+    } else if (act.id === 'counters') {
+      f.creatures.forEach((c) => { c.p += 1; c.t += 1; });
     } else if (act.cat === 'creature' && act.p != null) {
       f.creatures.push({ id: s.nextId, p: act.p, t: act.t ?? act.p }); s.nextId += 1;
     }
@@ -382,8 +413,15 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
     if (act.tgt) {
       target = pickTarget(s, idx, spread, ctx.rng);
       rec.target = target;
+      let amount = act.dmg || 0;
+      if (act.id === 'sacdrain') {
+        amount = f.creatures.filter((c) => c.token).length;
+        f.creatures = f.creatures.filter((c) => !c.token);
+        name = 'Sacrifices ' + amount + (amount === 1 ? ' token: you lose ' : ' tokens: you lose ') + amount;
+        you = 'Already applied: you lost ' + amount + ' life.';
+      }
       if (target === 'you') {
-        if (act.dmg) { s.you -= act.dmg; rec.spellHit = act.dmg; }
+        if (amount) { s.you -= amount; rec.spellHit = amount; }
       } else {
         const t = s.fish[target];
         let hit: string | null = null;
@@ -392,11 +430,11 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
           if (b) { hit = b.p + '/' + b.t; t.creatures = t.creatures.filter((c) => c.id !== b.id); }
         } else if (act.id === 'cmdr') {
           if (t.cmd.onBoard) { hit = 'commander'; t.creatures = t.creatures.filter((c) => !c.cmd); t.cmd.onBoard = false; t.cmd.tax += 2; }
-        } else if (act.dmg) {
-          t.life -= act.dmg;
-          rec.spellHit = act.dmg;
+        } else if (amount) {
+          t.life -= amount;
+          rec.spellHit = amount;
         }
-        if (act.builtIn) name = vsName(act.id, t.name, hit) || name;
+        if (act.builtIn) name = vsName(act.id, t.name, hit, amount) || name;
         you = 'Nothing for you. ' + t.name + ' takes this one.';
       }
     }
@@ -404,9 +442,10 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
 
     const attackers = f.creatures.filter((c) => attackerIds.includes(c.id));
     if (attackers.length) {
+      const pump = act.id === 'overrun' ? 3 : 0;
       let dmg = 0;
-      attackers.forEach((c) => { dmg += c.p; });
-      const who = attackers.map(ptLabel).join(', ');
+      attackers.forEach((c) => { dmg += c.p + pump; });
+      const who = groupCreatures(attackers).map(groupLabel).join(', ') + (pump ? ', each +3/+3' : '');
       const ct = pickTarget(s, idx, spread, ctx.rng);
       rec.attack = { to: ct, power: dmg, who: attackerLabel(attackers) };
       if (ct === 'you') {
@@ -416,6 +455,7 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
         const t = s.fish[ct];
         t.life -= dmg;
         steps.push({ k: 'Combat', v: 'Attacks ' + t.name + ' with ' + who + ' · ' + t.name + ' takes ' + dmg });
+        if (pump) you = 'Nothing for you. ' + t.name + ' takes the hit.';
       }
     } else if (act.id === 'wipe') {
       steps.push({ k: 'Combat', v: table ? 'No attack, the whole table got wiped' : 'No attack, it wiped its own board' });

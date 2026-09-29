@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { CATS, DIFF_LABEL, SEATS } from '../engine/catalog';
 import {
   advance, canReroll, createGame, edit, endYourTurn, peekNext, phaseOf, poss, reroll, undo,
-  type Ctx, type Edit, type GameState,
+  type CreatureGroup, type Ctx, type Edit, type GameState,
 } from '../engine/game';
 import { saveGame } from '../data/mutations';
 import { useStore } from '../data/store';
@@ -86,6 +86,23 @@ export function GameNav({ game, mobile }: { game: ReturnType<typeof useGame>; mo
       <button type="button" class="btn btn-danger-outline" style="padding: 0 12px" onClick={game.abandon}><Flag size={16} />Abandon game</button>
     </>
   );
+}
+
+/** How one board card reads: a single creature, or a stack of identical tokens. `owner` names a Free for All goldfish. */
+export function stackView(grp: CreatureGroup, owner?: string) {
+  const n = grp.ids.length;
+  const pt = grp.p + '/' + grp.t;
+  const its = owner ? poss(owner) : 'its';
+  let label: string;
+  if (grp.cmd) label = (owner ? poss(owner) : 'Its') + ' commander died, back to the command zone with tax';
+  else if (n > 1) label = `One of ${its} ${n} ${pt} tokens died`;
+  else label = `Remove ${owner ? poss(owner) : 'the'} ${pt} ${grp.token ? 'token' : 'creature'}`;
+  return {
+    n, pt, label,
+    stacked: n > 1,
+    lastId: grp.ids[n - 1],
+    kind: grp.cmd ? 'Commander' : grp.token ? (n > 1 ? 'Tokens' : 'Token') : 'Creature',
+  };
 }
 
 export function modeLabel(g: GameState, long: boolean): string {

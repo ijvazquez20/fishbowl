@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
 import { SEATS, YOU_COLOR } from '../engine/catalog';
-import { cmdPower, type Fish, poss } from '../engine/game';
+import { cmdPower, type Fish, groupCreatures, poss } from '../engine/game';
 import { useDesktop } from '../router';
 import { Crown, FishLogo, Land } from '../ui/icons';
 import { Brand, MiniStep } from '../ui/kit';
-import { GameNav, lastCat, modeLabel, RerollUndo, useGame } from './Game';
+import { GameNav, lastCat, modeLabel, RerollUndo, stackView, useGame } from './Game';
 
 export function GameTable() {
   const game = useGame();
@@ -98,16 +98,19 @@ export function GameTable() {
   );
   const creatureButtons = (v: ReturnType<typeof fishView>, w: number, h: number) => (
     <>
-      {v.f.creatures.map((c) => (
-        <li key={c.id} style="flex-shrink: 0">
-          <button type="button" class="mini-creature" style={`width: ${w}px; height: ${h}px; border-color: ${c.cmd ? v.seat.color : '#2C4B58'}; background: ${c.cmd ? v.seat.tint : '#152E38'}`}
-            aria-label={c.cmd ? poss(v.f.name) + ' commander died, back to the command zone with tax' : 'Remove ' + poss(v.f.name) + ' ' + c.p + '/' + c.t}
-            onClick={v.died(c.id)}>
-            <span class="display" style={`font-size: ${h > 60 ? 24 : 22}px; line-height: 1`}>{c.p}/{c.t}</span>
-            <span class="kind" style={`color: ${c.cmd ? v.seat.light : '#9FB6B3'}`}>{c.cmd ? 'Cmdr' : desktop ? 'Tap if dead' : 'Creature'}</span>
-          </button>
-        </li>
-      ))}
+      {groupCreatures(v.f.creatures).map((grp) => {
+        const sv = stackView(grp, v.f.name);
+        return (
+          <li key={grp.key} style="flex-shrink: 0">
+            <button type="button" class="mini-creature" style={`width: ${w}px; height: ${h}px; border-color: ${grp.cmd ? v.seat.color : '#2C4B58'}; background: ${grp.cmd ? v.seat.tint : '#152E38'}`}
+              aria-label={sv.label} onClick={v.died(sv.lastId)}>
+              {sv.stacked && <span class="stack-count sm">×{sv.n}</span>}
+              <span class="display" style={`font-size: ${h > 60 ? 24 : 22}px; line-height: 1`}>{sv.pt}</span>
+              <span class="kind" style={`color: ${grp.cmd ? v.seat.light : '#9FB6B3'}`}>{grp.cmd ? 'Cmdr' : grp.token ? sv.kind : desktop ? 'Tap if dead' : 'Creature'}</span>
+            </button>
+          </li>
+        );
+      })}
     </>
   );
   const outOverlay = (v: ReturnType<typeof fishView>, radius: number) => !v.f.alive && (

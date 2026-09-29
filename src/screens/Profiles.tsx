@@ -305,7 +305,7 @@ export function Profiles() {
                 ))}
               </ul>
               <div class="muted" style="display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45">
-                <span>Misses its land drop on {Math.round(P.miss * 100)}% of turns. Assumes a 4/4 commander.</span>
+                <span>Misses its land drop on {Math.round(P.miss * 100)}% of turns. Assumes a 4/4 commander, and creatures and tokens already on its board.</span>
                 <span>{far.length ? 'Can’t afford yet: ' + far.join(', ') + '.' : 'It can afford everything this profile has.'}</span>
               </div>
             </aside>

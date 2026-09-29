@@ -18,13 +18,15 @@
 .badge-counter { height: 34px; padding: 0 14px; border-radius: 17px; background: #1B2E4D; color: #A9CBFF; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
 .cost { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--land); color: var(--land); font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
 .empty-board { border-radius: 16px; border: 1.5px dashed var(--line-3); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 15px; text-align: center; padding: 0 12px; }
-.creature { width: 136px; height: 176px; padding: 10px; border-radius: 16px; background: #152E38; border: 2px solid var(--line-3); display: flex; flex-direction: column; gap: 6px; }
+.stack-count { position: absolute; top: 6px; right: 6px; min-width: 30px; height: 24px; padding: 0 8px; border-radius: 12px; background: var(--text); color: var(--bg); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.stack-count.sm { top: 3px; right: 3px; min-width: 22px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; }
+.creature { position: relative; width: 136px; height: 176px; padding: 10px; border-radius: 16px; background: #152E38; border: 2px solid var(--line-3); display: flex; flex-direction: column; gap: 6px; }
 .creature .art { flex-grow: 1; border-radius: 10px; background: repeating-linear-gradient(135deg, #183542 0 6px, #152E38 6px 12px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .creature .kind, .mini-creature .kind { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .creature.cmd { background: #2E1D10; border-color: var(--accent); }
 .creature.cmd .art { background: repeating-linear-gradient(135deg, #3A2415 0 6px, #2E1D10 6px 12px); }
 .creature.cmd .kind { color: var(--accent-light); }
-.mini-creature { width: 80px; height: 64px; border-radius: 12px; border: 2px solid var(--line-3); background: #152E38; color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.mini-creature { position: relative; width: 80px; height: 64px; border-radius: 12px; border: 2px solid var(--line-3); background: #152E38; color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .mini-creature .kind { font-size: 10px; }
 .mini-creature.cmd { border-color: var(--accent); background: #2E1D10; }
 .mini-creature.cmd .kind { color: var(--accent-light); }

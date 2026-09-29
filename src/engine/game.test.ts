@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveActions, effectiveProfiles, type Profile } from './catalog';
 import {
-  advance, canReroll, createGame, edit, endYourTurn, peekNext, reroll, undo,
+  advance, canReroll, createGame, edit, endYourTurn, groupCreatures, peekNext, reroll, undo,
   type Ctx, type GameState, type Setup,
 } from './game';
 import { scripted } from './rng';
@@ -248,6 +248,81 @@ describe('Free for All', () => {
     expect(summary.type).toBe('ffa');
     expect(summary.totals.knockouts).toBe(2);
     expect(summary.totals.dealt).toBe(80);
+  });
+});
+
+describe('tokens', () => {
+  const board = (s: GameState, lands: number, tokenCount: number, other: { p: number; cmd?: boolean }[] = []) => {
+    s.fish[0].lands = lands;
+    s.fish[0].creatures = [
+      ...Array.from({ length: tokenCount }, (_, i) => ({ id: 100 + i, p: 1, t: 1, token: true })),
+      ...other.map((c, i) => ({ id: 200 + i, p: c.p, t: c.p, cmd: c.cmd })),
+    ];
+    if (other.some((c) => c.cmd)) s.fish[0].cmd.onBoard = true;
+    return s;
+  };
+
+  it('makes tokens that stack on the board and in the attack text', () => {
+    const c = ctx([0.5], [profile('test', ['tokens3'])]);
+    let s = board(createGame(setup(), c), 2, 0);
+    s = endYourTurn(s, c);
+    expect(s.last?.act.id).toBe('tokens3');
+    expect(s.fish[0].creatures.every((x) => x.token)).toBe(true);
+    expect(groupCreatures(s.fish[0].creatures)).toHaveLength(1);
+    expect(groupCreatures(s.fish[0].creatures)[0].ids).toHaveLength(3);
+    s = endYourTurn(s, c);
+    expect(s.last?.steps[2].v).toBe('Attacks with 1/1 token ×3 · up to 3 damage. Block, then adjust your life.');
+  });
+
+  it('makes one token per land and spends every land', () => {
+    const c = ctx([0.5], [profile('test', ['tokensx'])]);
+    const s = endYourTurn(board(createGame(setup(), c), 5, 0), c);
+    expect(s.last?.name).toBe('Makes 6 1/1 tokens, one per land');
+    expect(s.last?.cost).toBe(6);
+    expect(s.fish[0].creatures).toHaveLength(6);
+  });
+
+  it('only doubles tokens when it has some, and the copies are 1/1s', () => {
+    const c = ctx([0.5], [profile('test', ['double'])]);
+    let s = endYourTurn(board(createGame(setup(), c), 7, 0, [{ p: 3 }]), c);
+    expect(s.last?.act.id).toBe('idle');
+    s = board(createGame(setup(), c), 7, 2, [{ p: 3 }]);
+    s.fish[0].creatures[0].p = 2;
+    s = endYourTurn(s, c);
+    expect(s.last?.name).toBe('Doubles its tokens: 2 more 1/1s');
+    expect(s.fish[0].creatures.filter((x) => x.token).map((x) => x.p)).toEqual([2, 1, 1, 1]);
+  });
+
+  it('puts a +1/+1 counter on every creature, commander too', () => {
+    const c = ctx([0.5], [profile('test', ['counters'])]);
+    const s = endYourTurn(board(createGame(setup(), c), 3, 2, [{ p: 4, cmd: true }]), c);
+    expect(s.fish[0].creatures.map((x) => x.p)).toEqual([2, 2, 5]);
+  });
+
+  it('overruns: attackers hit for +3 each this turn only', () => {
+    const c = ctx([0.5], [profile('test', ['overrun'])]);
+    const s = endYourTurn(board(createGame(setup(), c), 5, 2, [{ p: 4, cmd: true }]), c);
+    expect(s.last?.steps[2].v).toBe('Attacks with 1/1 token ×2, Commander 4/4, each +3/+3 · up to 15 damage. Block, then adjust your life.');
+    expect(s.rounds[0].seats[0]?.attack?.power).toBe(15);
+    expect(s.fish[0].creatures.map((x) => x.p)).toEqual([1, 1, 4]);
+  });
+
+  it('sacrifices its tokens to drain you, so they don’t attack', () => {
+    const c = ctx([0.5], [profile('test', ['sacdrain'])]);
+    const s = endYourTurn(board(createGame(setup(), c), 2, 4, [{ p: 3 }]), c);
+    expect(s.last?.name).toBe('Sacrifices 4 tokens: you lose 4');
+    expect(s.you).toBe(36);
+    expect(s.fish[0].creatures).toHaveLength(1);
+    expect(s.last?.steps[2].v).toBe('Attacks with a 3/3 · up to 3 damage. Block, then adjust your life.');
+  });
+
+  it('can drain another goldfish in Free for All', () => {
+    const c = ctx([0.9], [profile('test', ['sacdrain']), profile('test2', ['idle'])]);
+    let s = board(createGame(setup({ count: 2 }), c), 2, 3);
+    s = advance(s, c);
+    expect(s.last?.name).toBe('Sacrifices 3 tokens: Finn loses 3');
+    expect(s.fish[1].life).toBe(37);
+    expect(s.you).toBe(40);
   });
 });
 
