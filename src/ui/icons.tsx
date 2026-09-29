@@ -31,7 +31,9 @@ export const Plus = (p: P) => <Stroke d="M12 5v14M5 12h14" sw={2.4} {...p} />;
 export const Trash = (p: P) => <Stroke d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" {...p} />;
 export const List = (p: P) => <Stroke d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" {...p} />;
 export const Bars = (p: P) => <Stroke d="M4 20V10M10 20V4M16 20v-7M22 20H2" {...p} />;
-export const Restart = (p: P) => <Stroke d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" {...p} />;
+export const Cards = (p: P) => <Stroke d="M9 3h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 7v11a3 3 0 0 0 3 3h8" {...p} />;
+export const Play = (p: P) => <Stroke d="M7 4.5v15l12.5-7.5z" {...p} />;
+export const Flag = (p: P) => <Stroke d="M5 21V4M5 4h12l-2.5 4 2.5 4H5" {...p} />;
 export const Dots = ({ size = 20 }: P) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />

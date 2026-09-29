@@ -2,10 +2,10 @@ import { useMemo, useState } from 'preact/hooks';
 import { DIFFICULTIES, type Difficulty, SEATS } from '../engine/catalog';
 import type { First, Mode, Setup as GameSetup, Targeting } from '../engine/game';
 import { readLocal, useStore, writeLocal } from '../data/store';
-import { deckName, hasProgress, useStartGame } from '../play';
+import { useStartGame } from '../play';
 import { go, href, useDesktop } from '../router';
-import { Arrow, Bars, Bowl, Crown, FishLogo } from '../ui/icons';
-import { Brand, Seg, SelectField, Stepper, Switch } from '../ui/kit';
+import { Arrow, Bowl, Crown, FishLogo } from '../ui/icons';
+import { Brand, MainNav, MobileNav, Seg, SelectField, Stepper, Switch } from '../ui/kit';
 import './setup.css';
 
 interface FishForm { name: string; profileId: string; power: number }
@@ -34,7 +34,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 export function Setup({ query }: { query: URLSearchParams }) {
   const s = useStore();
   const desktop = useDesktop();
-  const { start, confirm } = useStartGame();
+  const start = useStartGame();
   const key = `fishbowl.setup.${s.user.uid}`;
   const [form, setForm] = useState<Form>(() => {
     const f = readLocal(key, DEFAULT);
@@ -80,16 +80,6 @@ export function Setup({ query }: { query: URLSearchParams }) {
       : [{ name: 'The Goldfish', profileId: soloProfile, cmdrPower: form.fish[0].power }],
   });
   const onStart = () => { if (deck) start(setup()); };
-
-  const resume = s.game && hasProgress(s.game) ? (
-    <div class="resume">
-      <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
-        <span style="font-weight: 700">{s.game.over ? 'Your last game isn’t saved yet' : 'Game in progress'}</span>
-        <span class="muted" style="font-size: 13px">{deckName(s, s.game.deckId)} · {s.game.fish.length === 1 ? 'One vs One' : `vs ${s.game.fish.length} goldfish`} · Round {s.game.round}</span>
-      </span>
-      <a class="btn btn-primary" href={href('/game')}>{s.game.over ? 'Back to it' : 'Resume'}</a>
-    </div>
-  ) : null;
 
   const deckField = decks.length ? (
     <div style="display: flex; flex-direction: column; gap: 8px">
@@ -189,9 +179,8 @@ export function Setup({ query }: { query: URLSearchParams }) {
       <div class="m-page setup-m">
         <header class="m-header">
           <Brand size={26} />
-          <a href={href('/decks')} class="icon-btn" aria-label="Decks and stats"><Bars size={22} /></a>
+          <MobileNav current="new" />
         </header>
-        {resume}
         <div style="display: flex; flex-direction: column; gap: 4px">
           <h1 class="display" style="font-size: 32px">New game</h1>
           <p class="muted" style="font-size: 15px">{table ? 'Set up the table, then draw seven.' : 'Set up the goldfish, then draw seven.'}</p>
@@ -286,7 +275,6 @@ export function Setup({ query }: { query: URLSearchParams }) {
           <a href={href('/profiles')} class="btn btn-ghost" style="height: 48px">Edit profiles</a>
         </div>
         <div style="text-align: center">{signOut}</div>
-        {confirm}
       </div>
     );
   }
@@ -310,10 +298,12 @@ export function Setup({ query }: { query: URLSearchParams }) {
       </aside>
 
       <main class="setup-main">
-        {resume}
-        <div style="display: flex; flex-direction: column; gap: 6px">
-          <h2 class="display" style="font-size: 36px">New game</h2>
-          <p class="muted" style="font-size: 16px">{table ? 'Set up the table, shuffle up, and draw seven.' : 'Set up the goldfish, shuffle up, and draw seven.'}</p>
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <h2 class="display" style="font-size: 36px">New game</h2>
+            <p class="muted" style="font-size: 16px">{table ? 'Set up the table, shuffle up, and draw seven.' : 'Set up the goldfish, shuffle up, and draw seven.'}</p>
+          </div>
+          <nav aria-label="Main" class="topnav" style="flex-shrink: 0"><MainNav current="new" /></nav>
         </div>
 
         {deckField}
@@ -435,7 +425,6 @@ export function Setup({ query }: { query: URLSearchParams }) {
           <button type="button" class="btn btn-outline btn-lg" style="font-size: 16px; padding: 0 22px" onClick={() => go(deck ? '/decks/' + deck.id : '/decks')}>Deck stats</button>
         </div>
       </main>
-      {confirm}
     </div>
   );
 }

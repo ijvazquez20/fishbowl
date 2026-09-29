@@ -4,8 +4,8 @@ import { deckAggregate, fmtAvg, fmtTurn, lastPlayedLabel } from '../engine/stats
 import { type DeckDraft, deleteDeck, saveDeck } from '../data/mutations';
 import { gamesForDeck, useStore } from '../data/store';
 import { go, href, useDesktop } from '../router';
-import { Back, Chev, Dots, Plus } from '../ui/icons';
-import { colorNames, Confirm, Modal, Pips, TopBar } from '../ui/kit';
+import { Chev, Dots, Plus } from '../ui/icons';
+import { colorNames, Confirm, MainNav, MobileNav, Modal, Pips, TopBar } from '../ui/kit';
 
 type Sort = 'last' | 'name' | 'kill';
 const SORTS: { id: Sort; label: string }[] = [
@@ -176,13 +176,11 @@ export function Decks({ query }: { query: URLSearchParams }) {
     return (
       <div class="m-page">
         <header class="m-header">
-          <div style="display: flex; align-items: center; gap: 4px">
-            <a href={href('/')} class="icon-btn" style="margin-left: -10px" aria-label="Back to new game"><Back size={22} /></a>
-            <h1 class="display" style="font-size: 24px">Decks</h1>
-          </div>
-          <button type="button" class="btn btn-primary" onClick={openAdd}><Plus size={16} sw={2.6} />Add deck</button>
+          <h1 class="display" style="font-size: 24px">Decks</h1>
+          <MobileNav current="decks" />
         </header>
         <p class="muted" style="margin-top: -6px; font-size: 14px; line-height: 1.45">Tap a deck to see its stats. One vs One and Free for All games count together.</p>
+        {cards.length > 0 && <button type="button" class="btn btn-primary" style="align-self: flex-start" onClick={openAdd}><Plus size={16} sw={2.6} />Add deck</button>}
         {cards.length > 0 && (
           <div style="display: flex; flex-direction: column; gap: 8px">
             <span id="dk-sort" class="muted" style="font-size: 13px">{count} · sort by</span>
@@ -197,10 +195,7 @@ export function Decks({ query }: { query: URLSearchParams }) {
   }
   return (
     <div class="page">
-      <TopBar>
-        <a href={href('/profiles')} class="btn btn-ghost">Profiles</a>
-        <a href={href('/')} class="btn btn-ghost btn-outline">New game</a>
-      </TopBar>
+      <TopBar><MainNav current="decks" /></TopBar>
       <main class="wrap" style="flex-grow: 1; padding-top: 32px; display: flex; flex-direction: column; gap: 24px">
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
           <div style="display: flex; flex-direction: column; gap: 6px">

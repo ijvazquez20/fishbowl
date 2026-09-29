@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { AuthUser, Backend } from './data/backend';
-import { type Store, StoreCtx, useActiveGame, useUserData } from './data/store';
-import { href, useRoute } from './router';
+import { type Store, StoreCtx, useActiveGame, useStore, useUserData } from './data/store';
+import { href, replace, useRoute } from './router';
 import { Decks } from './screens/Decks';
 import { GameDetail } from './screens/GameDetail';
 import { GameScreen } from './screens/Game';
@@ -100,10 +100,16 @@ function DataError({ backend, message }: { backend: Backend; message: string }) 
   );
 }
 
+function Redirect({ to }: { to: string }) {
+  useEffect(() => replace(to), [to]);
+  return null;
+}
+
 function Routes() {
+  const s = useStore();
   const { parts, query } = useRoute();
   const [a, b, c] = parts;
-  if (!a) return <Setup query={query} />;
+  if (!a) return s.game ? <Redirect to="/game" /> : <Setup query={query} />;
   if (a === 'game') return <GameScreen />;
   if (a === 'decks' && !b) return <Decks query={query} />;
   if (a === 'decks' && c === 'games') return <History deckId={b} />;

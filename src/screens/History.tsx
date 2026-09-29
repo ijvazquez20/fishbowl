@@ -3,7 +3,7 @@ import { modeKey } from '../engine/stats';
 import { gamesForDeck, useStore } from '../data/store';
 import { href, useDesktop } from '../router';
 import { Back } from '../ui/icons';
-import { TopBar } from '../ui/kit';
+import { MainNav, MobileNav, TopBar } from '../ui/kit';
 import { MissingDeck } from './Stats';
 import { type Filter, FilterChips, GameRow } from './statsParts';
 
@@ -27,10 +27,10 @@ export function History({ deckId }: { deckId: string }) {
             <a href={href('/decks/' + deckId)} class="icon-btn" style="margin-left: -10px" aria-label="Back to stats"><Back size={22} /></a>
             <span class="m-title">All games</span>
           </div>
-          <span class="muted" style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{deck.d.name}</span>
+          <MobileNav current="decks" />
         </header>
         <FilterChips mobile value={filter} onPick={setFilter} />
-        <span class="muted" style="font-size: 13px">{count}</span>
+        <span class="muted" style="font-size: 13px">{deck.d.name} · {count}</span>
         <section class="panel" style="padding: 6px 16px 4px; border-radius: 18px">
           {games.length ? <ul>{games.map((e) => <GameRow key={e.id} e={e} mobile />)}</ul> : empty}
         </section>
@@ -39,11 +39,7 @@ export function History({ deckId }: { deckId: string }) {
   }
   return (
     <div class="page">
-      <TopBar sub={deck.d.name}>
-        <a href={href('/decks')} class="btn btn-ghost">Decks</a>
-        <a href={href('/profiles')} class="btn btn-ghost">Profiles</a>
-        <a href={href('/?deck=' + deck.id)} class="btn btn-ghost btn-outline">New game</a>
-      </TopBar>
+      <TopBar sub={deck.d.name}><MainNav current="decks" /></TopBar>
       <main class="wrap" style="max-width: 960px; display: flex; flex-direction: column; gap: 18px">
         <a href={href('/decks/' + deckId)} class="back-link"><Back />Back to stats</a>
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">

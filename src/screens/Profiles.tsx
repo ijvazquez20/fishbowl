@@ -7,9 +7,9 @@ import {
   addAction, createProfile, deleteAction, deleteProfile, resetProfile, saveProfile, setActionCost,
 } from '../data/mutations';
 import { useStore } from '../data/store';
-import { href, useDesktop } from '../router';
-import { Back, ChevDown, Plus, Trash } from '../ui/icons';
-import { Brand, Confirm, Seg, Switch } from '../ui/kit';
+import { useDesktop } from '../router';
+import { ChevDown, Plus, Trash } from '../ui/icons';
+import { Confirm, MainNav, MobileNav, Seg, Switch, TopBar } from '../ui/kit';
 import './profiles.css';
 
 const CMD_POWER = 4;
@@ -157,20 +157,17 @@ export function Profiles() {
     </>
   );
   const errBar = err && <p role="alert" class="notice warn" style="display: flex; justify-content: space-between; gap: 12px">{err}<button type="button" class="link-btn" onClick={() => setErr('')}>Dismiss</button></p>;
-  const backTo = s.game ? '/game' : '/';
 
   if (!desktop) {
     return (
       <div class="m-page">
         <header class="m-header">
-          <div style="display: flex; align-items: center; gap: 4px; min-width: 0">
-            <a href={href(backTo)} class="icon-btn" style="margin-left: -10px" aria-label={s.game ? 'Back to game' : 'Back to new game'}><Back size={22} /></a>
-            <h1 class="display" style="font-size: 22px; white-space: nowrap">Opponent profiles</h1>
-          </div>
-          <button type="button" class="btn" style="color: var(--accent-light); font-weight: 700; padding: 0 12px" onClick={newProfile}><Plus size={16} />New</button>
+          <h1 class="m-title" style="font-size: 22px">Opponent profiles</h1>
+          <MobileNav current="profiles" />
         </header>
         {errBar}
         <div role="group" aria-label="Choose a profile" class="swipe" style="flex-shrink: 0; display: flex; gap: 6px; margin: -4px -16px 0; padding: 0 16px">
+          <button type="button" class="chip lg" style="border-style: dashed; border-color: var(--accent); color: var(--accent-light); display: inline-flex; align-items: center; gap: 6px" onClick={newProfile}><Plus size={16} />New</button>
           {profiles.map((p) => <button key={p.id} type="button" class="chip lg" aria-pressed={p.id === profile.id} onClick={() => setSel(p.id)}>{p.name}</button>)}
         </div>
         <section aria-label="Selected profile" class="panel" style="padding: 16px; border-radius: 18px; display: flex; flex-direction: column; gap: 10px">
@@ -261,13 +258,7 @@ export function Profiles() {
 
   return (
     <div class="page">
-      <header class="topbar">
-        <Brand />
-        <nav aria-label="Profiles" class="topnav">
-          <a href={href('/')} class="btn btn-ghost">New game</a>
-          {s.game && <a href={href('/game')} class="btn btn-ghost btn-outline"><Back />Back to game</a>}
-        </nav>
-      </header>
+      <TopBar><MainNav current="profiles" /></TopBar>
       <main class="wrap" style="display: flex; flex-direction: column; gap: 20px">
         <div style="display: flex; flex-direction: column; gap: 6px">
           <h1 class="display" style="font-size: 34px">Opponent profiles</h1>

@@ -11,5 +11,4 @@
 .setup-m .miss { align-self: stretch; min-height: 60px; padding: 8px 14px; }
 .setup-m .m-field { display: flex; flex-direction: column; gap: 8px; }
 .setup-m { gap: 20px; padding-left: 20px; padding-right: 20px; }
-.resume { padding: 12px 12px 12px 18px; border-radius: 16px; border: 2px solid var(--accent); background: var(--accent-bg); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .seg.big.md > button { font-size: 19px; }

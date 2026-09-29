@@ -1,13 +1,7 @@
-import { useState } from 'preact/hooks';
-import { createGame, type GameState, type Setup } from './engine/game';
+import { createGame, type Setup } from './engine/game';
 import type { GameSummary } from './engine/record';
 import { useStore } from './data/store';
 import { go } from './router';
-import { Confirm } from './ui/kit';
-
-export function hasProgress(g: GameState): boolean {
-  return !!g.over || g.round > 1 || !!g.last || g.rounds[0].dealt.some((d) => d > 0) || g.you !== g.setup.startingLife;
-}
 
 /** The setup a saved game was played with, for "Replay this setup" and "Play again". */
 export function setupFromSummary(g: GameSummary): Setup {
@@ -30,30 +24,15 @@ export function setupFromSummary(g: GameSummary): Setup {
   };
 }
 
-/** Starts a game, asking first if it would throw away one in progress. */
+/** Starts a game. Only one game at a time: with one in progress this just goes back to it. */
 export function useStartGame() {
   const s = useStore();
-  const [pending, setPending] = useState<Setup | null>(null);
-  const begin = (setup: Setup) => {
-    const g = createGame(setup, { actions: s.actions, profiles: s.profiles, rng: Math.random }, { id: s.backend.newKey() });
-    s.setGame(g);
+  return (setup: Setup) => {
+    if (!s.game) {
+      s.setGame(createGame(setup, { actions: s.actions, profiles: s.profiles, rng: Math.random }, { id: s.backend.newKey() }));
+    }
     go('/game');
   };
-  const start = (setup: Setup) => {
-    if (s.game && hasProgress(s.game)) setPending(setup);
-    else begin(setup);
-  };
-  const finished = !!s.game?.over;
-  const confirm = pending ? (
-    <Confirm
-      title="Start a new game?"
-      text={finished ? 'The game you just finished hasn’t been saved. Starting a new one discards it.' : 'Your game in progress won’t be saved.'}
-      confirm="Start new game"
-      onConfirm={() => { const p = pending; setPending(null); begin(p); }}
-      onCancel={() => setPending(null)}
-    />
-  ) : null;
-  return { start, confirm };
 }
 
 export function deckName(s: ReturnType<typeof useStore>, id: string): string {

@@ -5,15 +5,15 @@ import {
 import { gamesForDeck, useStore } from '../data/store';
 import { setupFromSummary, useStartGame } from '../play';
 import { href, useDesktop } from '../router';
-import { Back } from '../ui/icons';
-import { Brand, Pips, TopBar } from '../ui/kit';
+import { Back, Play } from '../ui/icons';
+import { Brand, MainNav, MobileNav, Pips, TopBar } from '../ui/kit';
 import { type Filter, FilterChips, GameRow, KillBars, Legend, gameMeta, gameTitle } from './statsParts';
 import './stats.css';
 
 export function Stats({ deckId, just }: { deckId: string; just: string | null }) {
   const s = useStore();
   const desktop = useDesktop();
-  const { start, confirm } = useStartGame();
+  const start = useStartGame();
   const [filter, setFilter] = useState<Filter>('all');
   const deck = s.decks.find((d) => d.id === deckId);
   if (!deck) return <MissingDeck />;
@@ -47,6 +47,8 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
       ? <>Interaction slows this deck down by <strong style="color: var(--text)">{gap.toFixed(1)} turns</strong> on average.</>
       : <>Interaction hasn’t slowed this deck down so far.</>;
   const playAgain = (e: GameEntry) => start(setupFromSummary(e.g));
+  // One game at a time: while one is in progress, the play buttons lead back to it.
+  const backToGame = (cls: string) => <a href={href('/game')} class={'btn btn-primary ' + cls}><Play size={16} />Back to game</a>;
   const emptyNote = games.length === 0 && (
     <p class="muted" style="font-size: 14px; line-height: 1.45; padding: 8px 0">{all.length ? 'No games in this mode yet.' : 'No games yet. Play one and it shows up here.'}</p>
   );
@@ -59,7 +61,7 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
             <a href={href('/decks')} class="icon-btn" style="margin-left: -10px" aria-label="All decks"><Back size={22} /></a>
             <span class="m-title">{deck.d.name}</span>
           </div>
-          <a href={href('/?deck=' + deck.id)} class="btn btn-outline" style="font-size: 14px; flex-shrink: 0">New game</a>
+          <MobileNav current="decks" />
         </header>
 
         {justGame ? (
@@ -74,7 +76,7 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
             <span class="soft" style="font-size: 13px; line-height: 1.45">{gameMeta(justGame, all)}</span>
             <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
               <a href={href('/games/' + justGame.id)} class="btn btn-md" style="border: 1px solid #4A3526; color: #FFD2B3; font-size: 15px">Game details</a>
-              <button type="button" class="btn btn-primary btn-md" onClick={() => playAgain(justGame)}>Play again</button>
+              {s.game ? backToGame('btn-md') : <button type="button" class="btn btn-primary btn-md" onClick={() => playAgain(justGame)}>Play again</button>}
             </div>
           </section>
         ) : (
@@ -91,7 +93,7 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
               </div>
             </div>
             <span class="muted" style="font-size: 13px">{deckMeta}</span>
-            <a href={href('/?deck=' + deck.id)} class="btn btn-primary btn-md">Play this deck</a>
+            {s.game ? backToGame('btn-md') : <a href={href('/?deck=' + deck.id)} class="btn btn-primary btn-md">Play this deck</a>}
           </section>
         )}
 
@@ -140,18 +142,13 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
           <ul>{recent.map((e) => <GameRow key={e.id} e={e} mobile />)}</ul>
           {all.length > 0 && <a href={href(`/decks/${deck.id}/games`)} class="btn btn-ghost" style="width: 100%; margin: 4px 0 8px; color: var(--accent-light)">See all {all.length} games</a>}
         </section>
-        {confirm}
       </div>
     );
   }
 
   return (
     <div class="page">
-      <TopBar sub={deck.d.name}>
-        <a href={href('/decks')} class="btn btn-ghost">Decks</a>
-        <a href={href('/profiles')} class="btn btn-ghost">Profiles</a>
-        <a href={href('/?deck=' + deck.id)} class="btn btn-ghost btn-outline">New game</a>
-      </TopBar>
+      <TopBar sub={deck.d.name}><MainNav current="decks" /></TopBar>
       <main class="wrap stats-d">
         {justGame ? (
           <section aria-labelledby="over-title" class="fish-card stats-head">
@@ -163,7 +160,7 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
             </div>
             <div style="flex-shrink: 0; display: flex; gap: 12px">
               <a href={href('/games/' + justGame.id)} class="btn btn-lg" style="border: 1px solid #4A3526; color: #FFD2B3; font-size: 16px; padding: 0 20px">Game details</a>
-              <button type="button" class="btn btn-primary btn-lg" onClick={() => playAgain(justGame)}>Play again</button>
+              {s.game ? backToGame('btn-lg') : <button type="button" class="btn btn-primary btn-lg" onClick={() => playAgain(justGame)}>Play again</button>}
             </div>
           </section>
         ) : (
@@ -182,7 +179,7 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
             </div>
             <div style="flex-shrink: 0; display: flex; gap: 12px">
               <a href={href('/decks')} class="btn btn-outline btn-lg" style="font-size: 16px; padding: 0 20px">All decks</a>
-              <a href={href('/?deck=' + deck.id)} class="btn btn-primary btn-lg">Play this deck</a>
+              {s.game ? backToGame('btn-lg') : <a href={href('/?deck=' + deck.id)} class="btn btn-primary btn-lg">Play this deck</a>}
             </div>
           </section>
         )}
@@ -238,7 +235,6 @@ export function Stats({ deckId, just }: { deckId: string; just: string | null })
           </div>
         </div>
       </main>
-      {confirm}
     </div>
   );
 }

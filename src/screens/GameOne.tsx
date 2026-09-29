@@ -1,8 +1,8 @@
 import { cmdPower } from '../engine/game';
-import { href, useDesktop } from '../router';
-import { Arrow, Bars, Crown, FishLogo, Heart, Land, List, Restart, Shield } from '../ui/icons';
+import { useDesktop } from '../router';
+import { Arrow, Crown, FishLogo, Heart, Land, Shield } from '../ui/icons';
 import { Brand, MiniStep } from '../ui/kit';
-import { lastCat, modeLabel, RerollUndo, useGame } from './Game';
+import { GameNav, lastCat, modeLabel, RerollUndo, useGame } from './Game';
 
 export function GameOne() {
   const game = useGame();
@@ -36,17 +36,13 @@ export function GameOne() {
       <div class="page game-m">
         <header class="m-header" style="height: 60px; padding: 0 8px 0 16px">
           <div style="display: flex; align-items: center; gap: 10px; min-width: 0">
-            <a href={href('/')} aria-label="Fishbowl, new game setup" style="display: flex"><FishLogo size={22} /></a>
+            <FishLogo size={22} />
             <span class="display" style="font-size: 20px; white-space: nowrap">Round {g.round}</span>
             <span style={`display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; color: ${started ? 'var(--teal-light)' : 'var(--accent-light)'}`}>
               <span class="dot" style={`width: 7px; height: 7px; background: ${started ? 'var(--teal)' : 'var(--accent)'}`} />{started ? 'Your turn' : 'Goldfish first'}
             </span>
           </div>
-          <nav aria-label="Game" style="display: flex; align-items: center">
-            <a href={href('/profiles')} class="icon-btn" aria-label="Opponent profiles"><List size={22} /></a>
-            <a href={href('/decks/' + g.deckId)} class="icon-btn" aria-label="Deck stats"><Bars size={22} /></a>
-            <button type="button" class="icon-btn" aria-label="New game" onClick={game.newGame}><Restart size={22} /></button>
-          </nav>
+          <GameNav game={game} mobile />
         </header>
         <main class="game-m-main">
           <section aria-label="The goldfish" class="panel" style="flex-shrink: 0; padding: 14px; display: flex; flex-direction: column; gap: 10px">
@@ -168,9 +164,7 @@ export function GameOne() {
         </div>
         <nav aria-label="Game" class="topnav" style="flex: 1 1 0">
           <span class="tag" style="height: 32px; border-radius: 16px">{modeLabel(g, true)}</span>
-          <a href={href('/profiles')} class="btn btn-ghost" style="padding: 0 12px">Profiles</a>
-          <a href={href('/decks/' + g.deckId)} class="btn btn-ghost" style="padding: 0 12px">Stats</a>
-          <button type="button" class="btn btn-ghost btn-outline" style="padding: 0 12px" onClick={game.newGame}>New game</button>
+          <GameNav game={game} />
         </nav>
       </header>
 

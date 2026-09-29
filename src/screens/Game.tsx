@@ -6,9 +6,9 @@ import {
 } from '../engine/game';
 import { saveGame } from '../data/mutations';
 import { useStore } from '../data/store';
-import { deckName, hasProgress } from '../play';
-import { go } from '../router';
-import { Reroll, Undo } from '../ui/icons';
+import { deckName } from '../play';
+import { go, href } from '../router';
+import { Bars, Cards, Flag, List, Reroll, Undo } from '../ui/icons';
 import { Confirm, Modal } from '../ui/kit';
 import { GameOne } from './GameOne';
 import { GameTable } from './GameTable';
@@ -28,19 +28,23 @@ export function useGame() {
   const ctx: Ctx = { actions: s.actions, profiles: s.profiles, rng: Math.random };
   // The state before the last manual change, so a mis-tap that ends the game can be taken back.
   const [beforeEdit, setBeforeEdit] = useState<GameState | null>(null);
-  const [askRestart, setAskRestart] = useState(false);
+  const [askAbandon, setAskAbandon] = useState(false);
   const set = (n: GameState) => { setBeforeEdit(null); s.setGame(n); };
   const restart = () => {
     const n = createGame(g.setup, ctx, { id: s.backend.newKey() });
     n.power = g.power;
     set(n);
   };
+  const abandon = () => {
+    s.setGame(null);
+    go('/');
+  };
   const dialogs = (
     <>
       {g.over && <OverDialog g={g} onAgain={restart} onUndo={beforeEdit ? () => set(beforeEdit) : undefined} />}
-      {askRestart && (
-        <Confirm title="Start over?" text="This game won’t be saved. You’ll start again with the same setup." confirm="Start over"
-          onConfirm={() => { setAskRestart(false); restart(); }} onCancel={() => setAskRestart(false)} />
+      {askAbandon && (
+        <Confirm danger title="Abandon this game?" text="It won’t be saved. You’ll go back to New game to pick a setup." confirm="Abandon game" cancel="Keep playing"
+          onConfirm={() => { setAskAbandon(false); abandon(); }} onCancel={() => setAskAbandon(false)} />
       )}
     </>
   );
@@ -56,9 +60,32 @@ export function useGame() {
     advance: () => set(advance(g, ctx)),
     reroll: () => set(reroll(g, ctx)),
     undo: () => set(undo(g)),
-    newGame: () => (hasProgress(g) ? setAskRestart(true) : restart()),
+    abandon: () => setAskAbandon(true),
     dialogs,
   };
+}
+
+/** Game screen header links: Decks, Profiles, this deck's Stats, and Abandon game. */
+export function GameNav({ game, mobile }: { game: ReturnType<typeof useGame>; mobile?: boolean }) {
+  const stats = href('/decks/' + game.g.deckId);
+  if (mobile) {
+    return (
+      <nav aria-label="Game" style="display: flex; align-items: center; flex-shrink: 0">
+        <a href={href('/decks')} class="icon-btn" style="width: 40px" aria-label="Decks"><Cards size={21} /></a>
+        <a href={href('/profiles')} class="icon-btn" style="width: 40px" aria-label="Opponent profiles"><List size={21} /></a>
+        <a href={stats} class="icon-btn" style="width: 40px" aria-label="Deck stats"><Bars size={21} /></a>
+        <button type="button" class="icon-btn" style="width: 40px; color: var(--danger)" aria-label="Abandon game" onClick={game.abandon}><Flag size={21} /></button>
+      </nav>
+    );
+  }
+  return (
+    <>
+      <a href={href('/decks')} class="btn btn-ghost" style="padding: 0 12px">Decks</a>
+      <a href={href('/profiles')} class="btn btn-ghost" style="padding: 0 12px">Profiles</a>
+      <a href={stats} class="btn btn-ghost" style="padding: 0 12px">Stats</a>
+      <button type="button" class="btn btn-danger-outline" style="padding: 0 12px" onClick={game.abandon}><Flag size={16} />Abandon game</button>
+    </>
+  );
 }
 
 export function modeLabel(g: GameState, long: boolean): string {

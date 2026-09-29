@@ -20,6 +20,8 @@ export function useRoute(): Route {
 
 export const href = (path: string) => '#' + path;
 export function go(path: string) { location.hash = '#' + path; }
+/** Navigates without leaving the current page in history, so Back doesn't bounce. */
+export function replace(path: string) { location.replace('#' + path); }
 
 export function useMedia(query: string): boolean {
   const [on, setOn] = useState(() => window.matchMedia(query).matches);

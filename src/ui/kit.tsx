@@ -1,13 +1,49 @@
 import type { ComponentChildren, JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { COLOR_ORDER, PIPS } from '../engine/catalog';
+import { useStore } from '../data/store';
 import { href } from '../router';
-import { ChevDown, FishLogo } from './icons';
+import { Cards, ChevDown, FishLogo, List, Play, Plus } from './icons';
+
+export type Section = 'decks' | 'profiles' | 'new';
+
+/**
+ * The same three links on every page. While a game is in progress (finished but unsaved counts),
+ * "Back to game" takes New game's place, so a second game can't be started.
+ */
+export function MainNav({ current }: { current?: Section }) {
+  const s = useStore();
+  const here = (x: Section) => (current === x ? 'page' : undefined);
+  return (
+    <>
+      <a href={href('/decks')} class="btn btn-ghost nav-link" aria-current={here('decks')}>Decks</a>
+      <a href={href('/profiles')} class="btn btn-ghost nav-link" aria-current={here('profiles')}>Profiles</a>
+      {s.game
+        ? <a href={href('/game')} class="btn btn-primary"><Play size={16} />Back to game</a>
+        : <a href={href('/')} class="btn btn-ghost btn-outline nav-link" aria-current={here('new')}>New game</a>}
+    </>
+  );
+}
+
+/** Phone version of MainNav: icon buttons for the page header. */
+export function MobileNav({ current }: { current?: Section }) {
+  const s = useStore();
+  const here = (x: Section) => (current === x ? 'page' : undefined);
+  return (
+    <nav aria-label="Main" style="display: flex; align-items: center; gap: 2px; flex-shrink: 0">
+      <a href={href('/decks')} class="icon-btn nav-link" aria-label="Decks" aria-current={here('decks')}><Cards size={22} /></a>
+      <a href={href('/profiles')} class="icon-btn nav-link" aria-label="Opponent profiles" aria-current={here('profiles')}><List size={22} /></a>
+      {s.game
+        ? <a href={href('/game')} class="icon-btn nav-game" aria-label="Back to game"><Play size={20} /></a>
+        : <a href={href('/')} class="icon-btn nav-link" aria-label="New game" aria-current={here('new')}><Plus size={22} /></a>}
+    </nav>
+  );
+}
 
 export function Brand({ sub, size = 28, to = '/' }: { sub?: string; size?: number; to?: string }) {
   return (
     <div style="display: flex; align-items: center; gap: 12px; min-width: 0">
-      <a class="brand" href={href(to)} aria-label="Fishbowl, new game">
+      <a class="brand" href={href(to)} aria-label="Fishbowl home">
         <FishLogo size={size} />
         <span class="brand-name" style={size < 28 ? 'font-size: 20px' : undefined}>Fishbowl</span>
       </a>

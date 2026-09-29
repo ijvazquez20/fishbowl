@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
 import { SEATS, YOU_COLOR } from '../engine/catalog';
 import { cmdPower, type Fish, poss } from '../engine/game';
-import { href, useDesktop } from '../router';
-import { Bars, Crown, FishLogo, Land, List, Restart } from '../ui/icons';
+import { useDesktop } from '../router';
+import { Crown, FishLogo, Land } from '../ui/icons';
 import { Brand, MiniStep } from '../ui/kit';
-import { lastCat, modeLabel, RerollUndo, useGame } from './Game';
+import { GameNav, lastCat, modeLabel, RerollUndo, useGame } from './Game';
 
 export function GameTable() {
   const game = useGame();
@@ -192,11 +192,7 @@ export function GameTable() {
             <span class="display" style="font-size: 20px; white-space: nowrap">Round {g.round}</span>
             <span style={`display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: ${turnLight}; white-space: nowrap`}><span class="dot" style={`background: ${turnColor}`} />{turnLabel}</span>
           </div>
-          <nav aria-label="Game" style="display: flex; align-items: center">
-            <a href={href('/profiles')} class="icon-btn" aria-label="Opponent profiles"><List size={22} /></a>
-            <a href={href('/decks/' + g.deckId)} class="icon-btn" aria-label="Deck stats"><Bars size={22} /></a>
-            <button type="button" class="icon-btn" aria-label="New game" onClick={game.newGame}><Restart size={22} /></button>
-          </nav>
+          <GameNav game={game} mobile />
         </header>
         <main class="game-m-main" style="gap: 10px">
           <div role="tablist" aria-label="Goldfish" style={`flex-shrink: 0; display: grid; grid-template-columns: repeat(${n}, minmax(0, 1fr)); gap: 8px`}>
@@ -292,9 +288,7 @@ export function GameTable() {
         </div>
         <nav aria-label="Game" class="topnav" style="flex: 1 1 0">
           <span class="tag" style="height: 32px; border-radius: 16px">{passive ? 'Passive' : modeLabel(g, false) + ' · ' + (spread ? 'Spread out' : 'All on you')}</span>
-          <a href={href('/profiles')} class="btn btn-ghost" style="padding: 0 12px">Profiles</a>
-          <a href={href('/decks/' + g.deckId)} class="btn btn-ghost" style="padding: 0 12px">Stats</a>
-          <button type="button" class="btn btn-ghost btn-outline" style="padding: 0 12px" onClick={game.newGame}>New game</button>
+          <GameNav game={game} />
         </nav>
       </header>
 

@@ -6,8 +6,8 @@ import { deleteGame } from '../data/mutations';
 import { useStore } from '../data/store';
 import { deckName, setupFromSummary, useStartGame } from '../play';
 import { go, href, useDesktop } from '../router';
-import { Back, Trash } from '../ui/icons';
-import { Confirm, Loading, TopBar } from '../ui/kit';
+import { Back, Play, Trash } from '../ui/icons';
+import { Confirm, Loading, MainNav, MobileNav, TopBar } from '../ui/kit';
 import { ChartLegend, LifeChart, type Series } from '../ui/LifeChart';
 import { gameTitle } from './statsParts';
 import './detail.css';
@@ -19,7 +19,7 @@ const seatIdx = (k: string | undefined) => (k && k !== 'you' ? Number(k.slice(1)
 export function GameDetail({ gameId }: { gameId: string }) {
   const s = useStore();
   const desktop = useDesktop();
-  const { start, confirm } = useStartGame();
+  const start = useStartGame();
   const entry = s.games.find((e) => e.id === gameId);
   const [rounds, setRounds] = useState<RoundView[] | null>(null);
   const [err, setErr] = useState('');
@@ -64,7 +64,9 @@ export function GameDetail({ gameId }: { gameId: string }) {
     : ['One vs One', modeChip(g), ...(g.setup.mode === 'active' ? [(g.setup.opponents.s0?.profileName || 'Balanced') + ' goldfish'] : []), resultChip(g)];
   const actions = (
     <>
-      <button type="button" class="btn btn-primary" style={desktop ? 'height: 56px; padding: 0 26px; border-radius: 14px; font-size: 17px' : 'height: 52px; border-radius: 14px; font-size: 16px'} onClick={() => start(setupFromSummary(g))}>Replay this setup</button>
+      {s.game
+        ? <a href={href('/game')} class="btn btn-primary" style={desktop ? 'height: 56px; padding: 0 26px; border-radius: 14px; font-size: 17px' : 'height: 52px; border-radius: 14px; font-size: 16px'}><Play size={16} />Back to game</a>
+        : <button type="button" class="btn btn-primary" style={desktop ? 'height: 56px; padding: 0 26px; border-radius: 14px; font-size: 17px' : 'height: 52px; border-radius: 14px; font-size: 16px'} onClick={() => start(setupFromSummary(g))}>Replay this setup</button>}
       <button type="button" class="btn btn-danger-outline" style={desktop ? 'height: 56px; padding: 0 18px; border-radius: 14px' : 'height: 48px; border-radius: 14px'} onClick={() => setAskDelete(true)}><Trash size={16} />Delete this game</button>
     </>
   );
@@ -74,7 +76,6 @@ export function GameDetail({ gameId }: { gameId: string }) {
         <Confirm danger title="Delete this game?" text="It comes out of this deck’s stats. You can’t undo this." confirm="Delete game" cancel="Keep game"
           onConfirm={onDelete} onCancel={() => setAskDelete(false)} />
       )}
-      {confirm}
     </>
   );
   const kpis = view?.kpis || [];
@@ -90,13 +91,13 @@ export function GameDetail({ gameId }: { gameId: string }) {
             <a href={href('/decks/' + g.deckId)} class="icon-btn" style="margin-left: -10px" aria-label="Back to stats"><Back size={22} /></a>
             <span class="m-title">Game detail</span>
           </div>
-          <span class="muted" style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{deck}</span>
+          <MobileNav current="decks" />
         </header>
         <section aria-labelledby="gd-title" class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
           <div style="display: flex; align-items: center; gap: 16px">
             <span class="display" style="font-size: 72px; line-height: 1; letter-spacing: -0.05em; color: var(--accent)">T{g.result.turn}</span>
             <div style="display: flex; flex-direction: column; gap: 4px">
-              <span class="over-eyebrow" style="font-size: 11px">{shortDate(g.endedAt)}</span>
+              <span class="over-eyebrow" style="font-size: 11px">{shortDate(g.endedAt)} · {deck}</span>
               <h1 id="gd-title" class="display" style="font-size: 21px; line-height: 1.15; letter-spacing: 0">{gameTitle(g)}</h1>
             </div>
           </div>
@@ -189,10 +190,7 @@ export function GameDetail({ gameId }: { gameId: string }) {
 
   return (
     <div class="page">
-      <TopBar sub={table ? `${deck} · vs ${count} goldfish` : deck}>
-        <a href={href('/profiles')} class="btn btn-ghost">Profiles</a>
-        <a href={href('/?deck=' + g.deckId)} class="btn btn-ghost btn-outline">New setup</a>
-      </TopBar>
+      <TopBar sub={table ? `${deck} · vs ${count} goldfish` : deck}><MainNav current="decks" /></TopBar>
       <main class="wrap" style="padding-top: 20px; display: flex; flex-direction: column; gap: 16px">
         <a href={href('/decks/' + g.deckId)} class="back-link"><Back />Back to stats</a>
         <section aria-labelledby="gd-title" class="panel" style="padding: 22px 28px; border-radius: 24px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap">
