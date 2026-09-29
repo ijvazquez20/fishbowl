@@ -249,7 +249,7 @@ export function GameTable() {
                 <span style={`font-size: 11px; font-weight: 600; color: ${v.seat.light}`}>{v.zone}</span>
               </div>
               {v.f.creatures.length ? (
-                <ul class="swipe" style="margin: 0 -14px; padding: 0 14px; display: flex; gap: 8px">{creatureButtons(v, 76, 58)}</ul>
+                <ul class="swipe" style="margin: -8px -14px 0; padding: 8px 14px 0; display: flex; gap: 12px">{creatureButtons(v, 76, 58)}</ul>
               ) : (
                 <div class="empty-board" style="height: 58px; font-size: 13px">No creatures</div>
               )}
@@ -338,7 +338,7 @@ export function GameTable() {
                     <span style={`display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: ${v.seat.light}`}><Crown size={14} />{v.zone}</span>
                   </div>
                   {f.creatures.length ? (
-                    <ul style="display: flex; flex-wrap: wrap; gap: 8px; overflow: auto; min-height: 0">{creatureButtons(v, 84, 64)}</ul>
+                    <ul style="display: flex; flex-wrap: wrap; gap: 12px; overflow: auto; min-height: 0; margin-top: -8px; padding: 8px 8px 0 0">{creatureButtons(v, 84, 64)}</ul>
                   ) : (
                     <div class="empty-board" style="height: 64px; font-size: 13px">No creatures</div>
                   )}

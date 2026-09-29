@@ -85,7 +85,7 @@ export function GameOne() {
               <span style="font-size: 12px; color: var(--accent-light); font-weight: 600">{f.cmd.onBoard ? 'Commander on the battlefield' : 'Commander in command zone · costs ' + castCost}</span>
             </div>
             {n ? (
-              <ul class="swipe" style="margin: 0 -16px; padding: 0 16px; display: flex; gap: 8px">
+              <ul class="swipe" style="margin: -8px -16px 0; padding: 8px 16px 0; display: flex; gap: 12px">
                 {groupCreatures(f.creatures).map((grp) => {
                   const v = stackView(grp);
                   return (
@@ -231,7 +231,7 @@ export function GameOne() {
               <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent-light)"><Crown size={16} />{f.cmd.onBoard ? 'Its commander is on the battlefield' : 'Its commander is in the command zone · costs ' + castCost}</span>
             </div>
             {n ? (
-              <ul style="display: flex; flex-wrap: wrap; gap: 14px; overflow: auto; min-height: 0">
+              <ul style="display: flex; flex-wrap: wrap; gap: 16px; overflow: auto; min-height: 0; margin-top: -10px; padding: 10px 10px 0 0">
                 {groupCreatures(f.creatures).map((grp) => {
                   const v = stackView(grp);
                   return (
