@@ -106,7 +106,7 @@ export function GameTable() {
               aria-label={sv.label} onClick={v.died(sv.lastId)}>
               {sv.stacked && <span class="stack-count sm">×{sv.n}</span>}
               <span class="display" style={`font-size: ${h > 60 ? 24 : 22}px; line-height: 1`}>{sv.pt}</span>
-              <span class="kind" style={`color: ${grp.cmd ? v.seat.light : '#9FB6B3'}`}>{grp.cmd ? 'Cmdr' : grp.token ? sv.kind : desktop ? 'Tap if dead' : 'Creature'}</span>
+              <span class="kind" style={`color: ${grp.cmd ? v.seat.light : '#9FB6B3'}`}>{grp.cmd ? 'Cmdr' : sv.kind}</span>
             </button>
           </TapSlot>
         );

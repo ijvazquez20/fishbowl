@@ -93,7 +93,7 @@ export function GameOne() {
                       <button type="button" class={'mini-creature' + (grp.cmd ? ' cmd' : '')} aria-label={v.label} onClick={died(v.lastId)}>
                         {v.stacked && <span class="stack-count sm">×{v.n}</span>}
                         <span class="display" style="font-size: 24px; line-height: 1">{v.pt}</span>
-                        <span class="kind">{grp.cmd ? 'Cmdr' : grp.token ? v.kind : 'Tap if dead'}</span>
+                        <span class="kind">{grp.cmd ? 'Cmdr' : v.kind}</span>
                       </button>
                     </TapSlot>
                   );
