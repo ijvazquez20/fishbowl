@@ -93,10 +93,6 @@ a.icon-btn.nav-game, a.icon-btn.nav-game:hover { background: var(--accent); colo
 .choice[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-bg); }
 .choice .choice-title { font-family: var(--display); font-size: 20px; font-weight: 700; }
 .choice .choice-desc { font-size: 15px; line-height: 1.45; color: var(--soft); }
-.radio { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--line-2); display: flex; align-items: center; justify-content: center; }
-.radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; }
-[aria-pressed='true'] > * > .radio, [aria-pressed='true'] > .radio { border-color: var(--accent); }
-[aria-pressed='true'] > * > .radio::after, [aria-pressed='true'] > .radio::after { background: var(--accent); }
 .pill { height: 44px; flex-shrink: 0; padding: 0 18px; border-radius: 22px; border: 2px solid var(--line-2); background: var(--field); color: var(--text); font-size: 15px; font-weight: 600; }
 .pill[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-bg); }
 .chip { height: 38px; flex-shrink: 0; padding: 0 14px; border-radius: 19px; border: 1px solid var(--line-3); background: transparent; color: var(--soft); font-size: 14px; font-weight: 600; }

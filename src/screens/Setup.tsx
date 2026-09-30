@@ -316,10 +316,7 @@ export function Setup({ query }: { query: URLSearchParams }) {
               ['active', 'Active', table ? 'They play lands, cast what they can afford, and attack. Tests your deck at a real table.' : 'Plays lands, casts what it can afford, and attacks you. Tests how your deck handles pressure.'],
             ] as [Mode, string, string][]).map(([id, label, desc]) => (
               <button key={id} type="button" class="choice" style="min-height: 100px" aria-pressed={form.mode === id} onClick={() => put(() => ({ mode: id }))}>
-                <span style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%">
-                  <span class="choice-title">{label}</span>
-                  <span class="radio" />
-                </span>
+                <span class="choice-title">{label}</span>
                 <span class="choice-desc">{desc}</span>
               </button>
             ))}
