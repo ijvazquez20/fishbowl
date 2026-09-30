@@ -4,7 +4,7 @@ import { cmdPower, type Fish, groupCreatures, poss, yourTurnBrief } from '../eng
 import { useDesktop } from '../router';
 import { Crown, FishLogo, Land, Shield, Undo } from '../ui/icons';
 import { Brand, MiniStep } from '../ui/kit';
-import { GameNav, lastCat, modeLabel, RerollUndo, stackView, useGame } from './Game';
+import { GameNav, lastCat, modeLabel, RerollUndo, stackView, TapSlot, useGame } from './Game';
 
 export function GameTable() {
   const game = useGame();
@@ -101,14 +101,14 @@ export function GameTable() {
       {groupCreatures(v.f.creatures).map((grp) => {
         const sv = stackView(grp, v.f.name);
         return (
-          <li key={grp.key} style="flex-shrink: 0">
-            <button type="button" class="mini-creature" style={`width: ${w}px; height: ${h}px; border-color: ${grp.cmd ? v.seat.color : '#2C4B58'}; background: ${grp.cmd ? v.seat.tint : '#152E38'}`}
+          <TapSlot key={grp.key} grp={grp} w={w} h={h}>
+            <button type="button" class="mini-creature" style={`border-color: ${grp.cmd ? v.seat.color : '#2C4B58'}; background: ${grp.cmd ? v.seat.tint : '#152E38'}`}
               aria-label={sv.label} onClick={v.died(sv.lastId)}>
               {sv.stacked && <span class="stack-count sm">×{sv.n}</span>}
               <span class="display" style={`font-size: ${h > 60 ? 24 : 22}px; line-height: 1`}>{sv.pt}</span>
               <span class="kind" style={`color: ${grp.cmd ? v.seat.light : '#9FB6B3'}`}>{grp.cmd ? 'Cmdr' : grp.token ? sv.kind : desktop ? 'Tap if dead' : 'Creature'}</span>
             </button>
-          </li>
+          </TapSlot>
         );
       })}
     </>
@@ -308,7 +308,7 @@ export function GameTable() {
                 <span style={`font-size: 11px; font-weight: 600; color: ${v.seat.light}`}>{v.zone}</span>
               </div>
               {v.f.creatures.length ? (
-                <ul class="swipe" style="margin: -8px -14px 0; padding: 8px 14px 0; display: flex; gap: 12px">{creatureButtons(v, 76, 58)}</ul>
+                <ul class="swipe board-list" style="margin: -8px -14px; padding: 8px 14px; min-height: 92px; gap: 12px">{creatureButtons(v, 76, 58)}</ul>
               ) : (
                 <div class="empty-board" style="height: 58px; font-size: 13px">No creatures</div>
               )}
@@ -397,7 +397,7 @@ export function GameTable() {
                     <span style={`display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: ${v.seat.light}`}><Crown size={14} />{v.zone}</span>
                   </div>
                   {f.creatures.length ? (
-                    <ul style="display: flex; flex-wrap: wrap; gap: 12px; overflow: auto; min-height: 0; margin-top: -8px; padding: 8px 8px 0 0">{creatureButtons(v, 84, 64)}</ul>
+                    <ul class="board-list" style="flex-wrap: wrap; gap: 12px; overflow: auto; min-height: 0; margin: -8px 0; padding: 8px 8px 8px 0">{creatureButtons(v, 84, 64)}</ul>
                   ) : (
                     <div class="empty-board" style="height: 64px; font-size: 13px">No creatures</div>
                   )}

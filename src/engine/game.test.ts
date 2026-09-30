@@ -78,6 +78,32 @@ describe('One vs One turns', () => {
     expect(s.last?.steps[2].v).toBe('Attacks with a 2/2 · up to 2 damage. Block, then adjust your life.');
   });
 
+  it('taps attackers, keeps new creatures summoning sick for a turn, and untaps on its next turn', () => {
+    const c = ctx([0.9], [profile('test', ['idle', 'c22'])]);
+    let s = times(createGame(setup(), c), 2, c);
+    const first = s.fish[0].creatures[0];
+    expect(first).toMatchObject({ sick: true });
+    expect(first.tapped).toBeFalsy();
+    s = endYourTurn(s, c);
+    const [a, b] = s.fish[0].creatures;
+    expect(a).toMatchObject({ sick: false, tapped: true });
+    expect(a.retaps).toBeFalsy();
+    expect(b).toMatchObject({ sick: true });
+    s = endYourTurn(s, c);
+    expect(s.fish[0].creatures[0]).toMatchObject({ tapped: true, retaps: 1 });
+    expect(s.fish[0].creatures[1]).toMatchObject({ tapped: true, sick: false });
+    expect(s.fish[0].creatures[1].retaps).toBeFalsy();
+  });
+
+  it('splits a token stack by state', () => {
+    const c = ctx([0.5], [profile('test', ['tokens'])]);
+    let s = times(createGame(setup(), c), 3, c);
+    const groups = groupCreatures(s.fish[0].creatures);
+    expect(groups.map((g) => [g.ids.length, g.tapped, g.sick])).toEqual([[2, true, false], [2, false, true]]);
+    s = endYourTurn(s, c);
+    expect(groupCreatures(s.fish[0].creatures).map((g) => [g.ids.length, g.tapped, g.sick])).toEqual([[4, true, false], [2, false, true]]);
+  });
+
   it('does nothing in passive mode', () => {
     const c = ctx([0.9], [profile('test', ['c11'])]);
     const s = endYourTurn(createGame(setup({ mode: 'passive' }), c), c);

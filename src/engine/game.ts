@@ -28,7 +28,19 @@ export interface Setup {
 }
 export interface Opponent { name: string; profileId: string; profileName: string; cmdrPower: number }
 
-export interface Creature { id: number; p: number; t: number; cmd?: boolean; token?: boolean }
+export interface Creature {
+  id: number;
+  p: number;
+  t: number;
+  cmd?: boolean;
+  token?: boolean;
+  /** Attacked on its owner's last turn; untaps when that goldfish's next turn begins. */
+  tapped?: boolean;
+  /** Entered on its owner's last turn, so it couldn't attack yet. */
+  sick?: boolean;
+  /** How many times it attacked while still tapped from the turn before (for the untap-and-tap animation). */
+  retaps?: number;
+}
 export interface Out { round: number; by: Actor; how: 'damage' | 'commander' }
 export interface Fish {
   name: string;
@@ -159,14 +171,33 @@ export function cmdPower(f: Fish): number {
   f.creatures.forEach((c) => { if (c.cmd) p = c.p; });
   return p;
 }
-export interface CreatureGroup { key: string; p: number; t: number; cmd: boolean; token: boolean; ids: number[] }
-/** Tokens with the same power and toughness stack together; every other creature stands alone. */
+export interface CreatureGroup {
+  key: string;
+  p: number;
+  t: number;
+  cmd: boolean;
+  token: boolean;
+  tapped: boolean;
+  sick: boolean;
+  retaps: number;
+  ids: number[];
+}
+/**
+ * Tokens with the same power, toughness and state (tapped, summoning sick) stack together; every
+ * other creature stands alone.
+ */
 export function groupCreatures(list: Creature[]): CreatureGroup[] {
   const out: CreatureGroup[] = [];
   list.forEach((c) => {
-    const same = c.token ? out.find((g) => g.token && g.p === c.p && g.t === c.t) : undefined;
-    if (same) same.ids.push(c.id);
-    else out.push({ key: String(c.id), p: c.p, t: c.t, cmd: !!c.cmd, token: !!c.token, ids: [c.id] });
+    const tapped = !!c.tapped;
+    const sick = !!c.sick;
+    const same = c.token ? out.find((g) => g.token && g.p === c.p && g.t === c.t && g.tapped === tapped && g.sick === sick) : undefined;
+    if (same) {
+      same.ids.push(c.id);
+      same.retaps = Math.max(same.retaps, c.retaps || 0);
+    } else {
+      out.push({ key: String(c.id), p: c.p, t: c.t, cmd: !!c.cmd, token: !!c.token, tapped, sick, retaps: c.retaps || 0, ids: [c.id] });
+    }
   });
   return out;
 }
@@ -244,7 +275,7 @@ function usable(a: Action, f: Fish): boolean {
   return true;
 }
 function tokens(f: Fish, s: GameState, n: number) {
-  for (let k = 0; k < n; k++) { f.creatures.push({ id: s.nextId, p: 1, t: 1, token: true }); s.nextId += 1; }
+  for (let k = 0; k < n; k++) { f.creatures.push({ id: s.nextId, p: 1, t: 1, token: true, sick: true }); s.nextId += 1; }
 }
 function poolFor(f: Fish, profile: Profile | null, exclude: string[], actions: Action[]): Action[] {
   if (!profile) return [];
@@ -343,6 +374,9 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
     rerolls: opts.rerolls || 0, lost: 0, cmdToYou: 0, knockedOut: [],
   };
   f.counter = false;
+  // Untap step: its creatures untap and shake off summoning sickness.
+  const wasTapped = new Set(f.creatures.filter((c) => c.tapped).map((c) => c.id));
+  f.creatures.forEach((c) => { c.tapped = false; c.sick = false; });
 
   if (s.setup.mode === 'passive') {
     act = { ...IDLE, id: 'passive', name: 'Does nothing' };
@@ -382,7 +416,7 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
     you = gameYouText(act, table);
 
     if (act.id === 'cmdcast') {
-      f.creatures.push({ id: s.nextId, p: f.cmd.power, t: f.cmd.power, cmd: true }); s.nextId += 1;
+      f.creatures.push({ id: s.nextId, p: f.cmd.power, t: f.cmd.power, cmd: true, sick: true }); s.nextId += 1;
       f.cmd.onBoard = true;
       name = 'Casts its commander (' + f.cmd.power + '/' + f.cmd.power + ')';
     } else if (act.id === 'equip') {
@@ -399,7 +433,7 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
     } else if (act.id === 'counters') {
       f.creatures.forEach((c) => { c.p += 1; c.t += 1; });
     } else if (act.cat === 'creature' && act.p != null) {
-      f.creatures.push({ id: s.nextId, p: act.p, t: act.t ?? act.p }); s.nextId += 1;
+      f.creatures.push({ id: s.nextId, p: act.p, t: act.t ?? act.p, sick: true }); s.nextId += 1;
     }
     if (act.id === 'ramp') f.lands += 1;
     if (act.id === 'wipe') {
@@ -447,6 +481,10 @@ function runFishTurn(s: GameState, idx: number, opts: TurnOpts, ctx: Ctx): GameS
       let dmg = 0;
       attackers.forEach((c) => { dmg += c.p + pump; });
       const who = groupCreatures(attackers).map(groupLabel).join(', ') + (pump ? ', each +3/+3' : '');
+      attackers.forEach((c) => {
+        c.tapped = true;
+        if (wasTapped.has(c.id)) c.retaps = (c.retaps || 0) + 1;
+      });
       const ct = pickTarget(s, idx, spread, ctx.rng);
       rec.attack = { to: ct, power: dmg, who: attackerLabel(attackers) };
       if (ct === 'you') {

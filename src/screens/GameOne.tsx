@@ -2,7 +2,7 @@ import { cmdPower, groupCreatures } from '../engine/game';
 import { useDesktop } from '../router';
 import { Arrow, Crown, FishLogo, Heart, Land, Shield } from '../ui/icons';
 import { Brand, MiniStep } from '../ui/kit';
-import { GameNav, lastCat, modeLabel, RerollUndo, stackView, useGame } from './Game';
+import { GameNav, lastCat, modeLabel, RerollUndo, stackView, TapSlot, useGame } from './Game';
 
 export function GameOne() {
   const game = useGame();
@@ -85,17 +85,17 @@ export function GameOne() {
               <span style="font-size: 12px; color: var(--accent-light); font-weight: 600">{f.cmd.onBoard ? 'Commander on the battlefield' : 'Commander in command zone · costs ' + castCost}</span>
             </div>
             {n ? (
-              <ul class="swipe" style="margin: -8px -16px 0; padding: 8px 16px 0; display: flex; gap: 12px">
+              <ul class="swipe board-list" style="margin: -8px -16px; padding: 8px 16px; min-height: 96px; gap: 12px">
                 {groupCreatures(f.creatures).map((grp) => {
                   const v = stackView(grp);
                   return (
-                    <li key={grp.key} style="flex-shrink: 0">
+                    <TapSlot key={grp.key} grp={grp} w={80} h={64}>
                       <button type="button" class={'mini-creature' + (grp.cmd ? ' cmd' : '')} aria-label={v.label} onClick={died(v.lastId)}>
                         {v.stacked && <span class="stack-count sm">×{v.n}</span>}
                         <span class="display" style="font-size: 24px; line-height: 1">{v.pt}</span>
                         <span class="kind">{grp.cmd ? 'Cmdr' : grp.token ? v.kind : 'Tap if dead'}</span>
                       </button>
-                    </li>
+                    </TapSlot>
                   );
                 })}
               </ul>
@@ -231,19 +231,21 @@ export function GameOne() {
               <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent-light)"><Crown size={16} />{f.cmd.onBoard ? 'Its commander is on the battlefield' : 'Its commander is in the command zone · costs ' + castCost}</span>
             </div>
             {n ? (
-              <ul style="display: flex; flex-wrap: wrap; gap: 16px; overflow: auto; min-height: 0; margin-top: -10px; padding: 10px 10px 0 0">
+              <ul class="board-list" style="flex-wrap: wrap; gap: 16px; overflow: auto; min-height: 0; margin: -10px 0; padding: 10px 10px 10px 0">
                 {groupCreatures(f.creatures).map((grp) => {
                   const v = stackView(grp);
                   return (
-                    <li key={grp.key} class={'creature' + (grp.cmd ? ' cmd' : '')}>
-                      {v.stacked && <span class="stack-count">×{v.n}</span>}
-                      <div class="art">
-                        {grp.cmd && <Crown size={18} color="#FFB07A" />}
-                        <span class="display" style="font-size: 40px; line-height: 1">{v.pt}</span>
-                        <span class="kind">{v.kind}</span>
+                    <TapSlot key={grp.key} grp={grp} w={136} h={176}>
+                      <div class={'creature' + (grp.cmd ? ' cmd' : '')}>
+                        {v.stacked && <span class="stack-count">×{v.n}</span>}
+                        <div class="art">
+                          {grp.cmd && <Crown size={18} color="#FFB07A" />}
+                          <span class="display" style="font-size: 40px; line-height: 1">{v.pt}</span>
+                          <span class="kind">{v.kind}</span>
+                        </div>
+                        <button type="button" class="pad" style="font-size: 14px; font-weight: 600" aria-label={v.label} onClick={died(v.lastId)}>{v.stacked ? 'One died' : 'It died'}</button>
                       </div>
-                      <button type="button" class="pad" style="font-size: 14px; font-weight: 600" aria-label={v.label} onClick={died(v.lastId)}>{v.stacked ? 'One died' : 'It died'}</button>
-                    </li>
+                    </TapSlot>
                   );
                 })}
               </ul>

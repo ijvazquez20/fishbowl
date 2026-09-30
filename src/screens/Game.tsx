@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'preact/hooks';
+import type { ComponentChildren } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { CATS, DIFF_LABEL, SEATS } from '../engine/catalog';
 import {
   advance, canReroll, createGame, edit, endYourTurn, peekNext, phaseOf, poss, reroll, undo,
@@ -88,6 +89,25 @@ export function GameNav({ game, mobile }: { game: ReturnType<typeof useGame>; mo
   );
 }
 
+/**
+ * Holds one board card. Tapped cards turn sideways (the slot swaps width and height so nothing
+ * overlaps), summoning-sick cards are greyed out, and a creature that attacks again while still
+ * tapped straightens and turns back. `w`/`h` are the upright card size.
+ */
+export function TapSlot({ grp, w, h, children }: { grp: CreatureGroup; w: number; h: number; children: ComponentChildren }) {
+  const seen = useRef<number | null>(null);
+  const [replay, setReplay] = useState(0);
+  useEffect(() => {
+    if (seen.current !== null && grp.retaps > seen.current) setReplay((n) => n + 1);
+    seen.current = grp.retaps;
+  }, [grp.retaps]);
+  return (
+    <li class={'slot' + (grp.tapped ? ' tapped' : '') + (grp.sick ? ' sick' : '')} style={`--w: ${w}px; --h: ${h}px`}>
+      <div key={replay} class={'slot-card' + (replay ? ' retap' : '')}>{children}</div>
+    </li>
+  );
+}
+
 /** How one board card reads: a single creature, or a stack of identical tokens. `owner` names a Free for All goldfish. */
 export function stackView(grp: CreatureGroup, owner?: string) {
   const n = grp.ids.length;
@@ -97,6 +117,8 @@ export function stackView(grp: CreatureGroup, owner?: string) {
   if (grp.cmd) label = (owner ? poss(owner) : 'Its') + ' commander died, back to the command zone with tax';
   else if (n > 1) label = `One of ${its} ${n} ${pt} tokens died`;
   else label = `Remove ${owner ? poss(owner) : 'the'} ${pt} ${grp.token ? 'token' : 'creature'}`;
+  if (grp.sick) label += ' (summoning sick)';
+  else if (grp.tapped) label += ' (tapped)';
   return {
     n, pt, label,
     stacked: n > 1,
