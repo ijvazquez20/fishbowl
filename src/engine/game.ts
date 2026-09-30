@@ -5,6 +5,7 @@ import {
   type Action, type Cat, type Difficulty, type Profile,
   PRESET, gameYouText, weightFor,
 } from './catalog';
+import { tookFrom } from './record';
 
 export type Actor = 'you' | number;
 export type Mode = 'passive' | 'active';
@@ -526,6 +527,35 @@ export function endYourTurn(s: GameState, ctx: Ctx): GameState {
     cur = step(cur, ctx, {}, true);
   }
   return cur;
+}
+
+/**
+ * The goldfish turns played since your last turn, in play order: the seats after yours last
+ * round, then any seated before you this round.
+ */
+export function turnsSinceYou(s: GameState): { seat: number; rec: SeatRec }[] {
+  const youPos = s.order.indexOf('you');
+  const out: { seat: number; rec: SeatRec }[] = [];
+  const add = (r: RoundRec | undefined, seats: Actor[]) => seats.forEach((a) => {
+    if (a !== 'you' && r?.seats[a]) out.push({ seat: a, rec: r.seats[a] as SeatRec });
+  });
+  add(s.rounds[s.round - 2], s.order.slice(youPos + 1));
+  add(s.rounds[s.round - 1], s.order.slice(0, youPos));
+  return out;
+}
+
+/**
+ * What your turn card needs: goldfish holding up a counterspell, goldfish that taxed your spells
+ * since your last turn, and the life each goldfish took from you since then.
+ */
+export function yourTurnBrief(s: GameState) {
+  const since = turnsSinceYou(s);
+  return {
+    played: since.length,
+    counters: s.fish.map((f, i) => (f.alive && f.counter ? i : -1)).filter((i) => i >= 0),
+    taxes: since.filter(({ rec }) => rec.action === 'tax' && rec.target === 'you').map((t) => t.seat),
+    hits: since.map(({ seat, rec }) => ({ seat, n: tookFrom(rec) })).filter((h) => h.n > 0),
+  };
 }
 
 export function canReroll(s: GameState): boolean {

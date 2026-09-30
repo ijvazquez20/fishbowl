@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveActions, effectiveProfiles, type Profile } from './catalog';
 import {
-  advance, canReroll, createGame, edit, endYourTurn, groupCreatures, peekNext, reroll, undo,
+  advance, canReroll, createGame, edit, endYourTurn, groupCreatures, peekNext, reroll, turnsSinceYou, undo, yourTurnBrief,
   type Ctx, type GameState, type Setup,
 } from './game';
 import { scripted } from './rng';
@@ -216,6 +216,36 @@ describe('Free for All', () => {
     expect(s.order[s.pos]).toBe('you');
     expect(s.round).toBe(2);
     expect(s.rounds[0].life?.fish).toEqual([40, 38]);
+  });
+
+  it('lists the goldfish turns since your last turn, whatever your seat', () => {
+    const c = ctx([0.9], shooters());
+    let s = createGame(setup({ count: 2 }), c);
+    s = advance(advance(advance(s, c), c), c);
+    expect(s.order[s.pos]).toBe('you');
+    expect(turnsSinceYou(s).map((t) => t.seat)).toEqual([0, 1]);
+
+    const seated = createGame(setup({ count: 2, first: 'random' }), ctx([0.5], shooters()));
+    expect(seated.order).toEqual([0, 'you', 1]);
+    let r = advance(seated, c);
+    r = advance(r, c);
+    expect(r.order[r.pos]).toBe('you');
+    expect(turnsSinceYou(r).map((t) => t.seat)).toEqual([0]);
+    r = advance(advance(advance(r, c), c), c);
+    expect(r.round).toBe(2);
+    expect(turnsSinceYou(r).map((t) => t.seat)).toEqual([1, 0]);
+  });
+
+  it('briefs your turn: counterspells up, taxes on you, and damage since', () => {
+    const c = ctx([0.5], [profile('test', ['counter']), profile('test2', ['tax'])]);
+    let s = createGame(setup({ count: 2, targeting: 'you' }), c);
+    s.fish[0].lands = 1;
+    s.fish[1].lands = 1;
+    s = advance(s, c);
+    s = edit(s, { k: 'youLife', delta: -3 });
+    s = advance(advance(s, c), c);
+    expect(s.order[s.pos]).toBe('you');
+    expect(yourTurnBrief(s)).toEqual({ played: 2, counters: [0], taxes: [1], hits: [{ seat: 0, n: 3 }] });
   });
 
   it('knocks out a goldfish another goldfish finished', () => {

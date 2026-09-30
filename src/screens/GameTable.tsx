@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'preact/hooks';
 import { SEATS, YOU_COLOR } from '../engine/catalog';
-import { cmdPower, type Fish, groupCreatures, poss } from '../engine/game';
+import { cmdPower, type Fish, groupCreatures, poss, yourTurnBrief } from '../engine/game';
 import { useDesktop } from '../router';
-import { Crown, FishLogo, Land } from '../ui/icons';
+import { Crown, FishLogo, Land, Shield, Undo } from '../ui/icons';
 import { Brand, MiniStep } from '../ui/kit';
 import { GameNav, lastCat, modeLabel, RerollUndo, stackView, useGame } from './Game';
 
@@ -120,7 +120,66 @@ export function GameTable() {
       <span class="soft" style="font-size: 14px">{v.outText}</span>
     </div>
   );
-  const lastCard = (compact: boolean) => (
+  // On your turn the card is yours: what to play around, and what the goldfish did to you since.
+  const brief = yourTurnBrief(g);
+  const headsUp = [
+    ...brief.counters.map((i) => g.fish[i].name + ' is holding up a counterspell: your first spell gets countered.'),
+    ...brief.taxes.map((i) => g.fish[i].name + ' taxed your spells: they cost 1 more this turn.'),
+  ];
+  const hits = brief.hits;
+  const lostTotal = hits.reduce((a, h) => a + h.n, 0);
+  const undoButton = (compact: boolean) => compact
+    ? <button type="button" class="icon-btn" style="width: 44px; border-radius: 10px; border: 1px solid #2C4B58" aria-label="Undo" disabled={!game.canUndo} onClick={game.undo}><Undo /></button>
+    : <button type="button" class="btn btn-ghost" style="align-self: flex-start; border: 1px solid #2C4B58; border-radius: 10px; font-size: 14px" disabled={!game.canUndo} onClick={game.undo}><Undo size={16} />Undo</button>;
+  const yourCard = (compact: boolean) => (
+    <article aria-live="polite" class="table-card" style={`border-color: ${YOU_COLOR.color}; ${compact ? 'padding: 10px 12px 12px 14px; border-radius: 18px; gap: 8px' : 'gap: 14px'}`}>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <span style={`font-size: ${compact ? 11 : 13}px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${YOU_COLOR.light}`}>Your turn · Round {g.round}</span>
+        {compact && undoButton(true)}
+      </div>
+      {!compact && (
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h2 class="display" style="font-size: 26px; line-height: 1.1">Play your turn</h2>
+          <p class="soft" style="font-size: 15px; line-height: 1.45">Then hit End your turn. Each goldfish plays in seat order, one at a time.</p>
+        </div>
+      )}
+      <section aria-label="Heads-up" style="display: flex; flex-direction: column; gap: 6px">
+        {!compact && <span class="eyebrow" style="font-size: 12px; font-weight: 700">Heads-up</span>}
+        {headsUp.length
+          ? headsUp.map((t, i) => <p key={i} class="notice" style={`display: flex; align-items: flex-start; gap: 8px; ${compact ? 'padding: 8px 10px; font-size: 13px' : ''}`}><Shield size={16} style="flex-shrink: 0; margin-top: 2px" />{t}</p>)
+          : <p class="muted" style={`font-size: ${compact ? 13 : 14}px; line-height: 1.4`}>Nothing to play around: no counterspells or taxes on you.</p>}
+      </section>
+      <section aria-label="Since your last turn" style={`display: flex; flex-direction: column; gap: 6px; ${compact ? '' : 'padding-top: 12px; border-top: 1px solid #1E3844'}`}>
+        {!compact && <span class="eyebrow" style="font-size: 12px; font-weight: 700">Since your last turn</span>}
+        {brief.played === 0 ? (
+          <p class="muted" style={`font-size: ${compact ? 13 : 14}px`}>No goldfish has played yet.</p>
+        ) : !hits.length ? (
+          <p class="muted" style={`font-size: ${compact ? 13 : 14}px`}>{compact ? 'No damage to you since your last turn.' : 'None of them hurt you.'}</p>
+        ) : compact ? (
+          <p style="font-size: 13px; line-height: 1.4"><span class="muted">Since your last turn: </span>
+            {hits.map((h, i) => <span key={h.seat}>{i > 0 && ' · '}<span style={`font-weight: 700; color: ${SEATS[h.seat].light}`}>{g.fish[h.seat].name}</span> −{h.n}</span>)}
+          </p>
+        ) : (
+          <ul style="display: flex; flex-direction: column; gap: 4px">
+            {hits.map((h) => (
+              <li key={h.seat} style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 14px">
+                <span style={`font-weight: 700; color: ${SEATS[h.seat].light}`}>{g.fish[h.seat].name}</span>
+                <span class="num" style="font-weight: 700">−{h.n}</span>
+              </li>
+            ))}
+            {hits.length > 1 && (
+              <li style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 4px; border-top: 1px solid #1E3844; font-size: 14px">
+                <span class="muted">You lost</span>
+                <span class="num" style="font-weight: 800">{lostTotal}</span>
+              </li>
+            )}
+          </ul>
+        )}
+      </section>
+      {!compact && <div style="margin-top: auto">{undoButton(false)}</div>}
+    </article>
+  );
+  const lastCard = (compact: boolean) => phase === 'you' ? yourCard(compact) : (
     <article aria-live="polite" class="table-card" style={`border-color: ${cardColor}; ${compact ? 'padding: 10px 12px 12px 14px; border-radius: 18px; gap: 6px' : ''}`}>
       {compact ? (
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
